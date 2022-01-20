@@ -7,3 +7,6 @@ build/
 *.pyd
 vspowerups/optimize.c
 *.spec
+.python-version
+.ccls-cache
+*.so
