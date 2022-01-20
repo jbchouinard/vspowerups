@@ -6,7 +6,7 @@
 
 ## Download
 
-See [releases].(https://github.com/jbchouinard/vspowerups/releases).
+See [releases](https://github.com/jbchouinard/vspowerups/releases).
 
 ## Build from source
 
