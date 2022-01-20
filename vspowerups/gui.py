@@ -10,6 +10,7 @@ from vspowerups.worker import Worker
 TITLE = "Vampire Survivors Power Up Optimizer"
 
 FONTS = ["Noto Mono", "Liberation Mono"]
+SERIF_FONTS = ["Helvetica", "Noto Serif", "Liberation Serif"]
 
 EXPAND = tkinter.N + tkinter.S + tkinter.W + tkinter.E
 
@@ -19,7 +20,7 @@ class PowerUpWidget(ttk.Frame):
         super().__init__(parent, **kwargs)
         self.var_tier = tkinter.StringVar(self, value="0")
         self.powerup = powerup
-        self.group = ttk.LabelFrame(self, text=powerup.name, borderwidth=1, relief="raise", pad=10)
+        self.group = ttk.LabelFrame(self, text=powerup.name, pad=10)
         self.group.grid(row=0, column=0, sticky=EXPAND)
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -44,7 +45,10 @@ class PowerUpWidget(ttk.Frame):
 
         self.var_sell_cost = tkinter.StringVar(self, value="-")
         self.sell_cost_label = ttk.Label(
-            self.group, textvariable=self.var_sell_cost, width=5, style="SellCost.TLabel"
+            self.group,
+            textvariable=self.var_sell_cost,
+            width=5,
+            style="SellCost.TLabel",
         )
         self.sell_cost_label.grid(row=1, column=2)
 
@@ -70,7 +74,9 @@ class PowerUpsWidget(ttk.Frame):
         )
         self.worker.start()
 
-        self.winfo_toplevel().bind("<<PowerUpTierUpdate>>", self.callback_tier_update, add="+")
+        self.winfo_toplevel().bind(
+            "<<PowerUpTierUpdate>>", self.callback_tier_update, add="+"
+        )
 
         cost_frame = ttk.Frame(self)
         cost_frame.grid(row=0, column=0)
@@ -79,12 +85,15 @@ class PowerUpsWidget(ttk.Frame):
 
         self.var_total_cost = tkinter.StringVar(value="0")
         cost_label = ttk.Label(
-            cost_frame, textvariable=self.var_total_cost, style="LargeBold.TLabel", width=5
+            cost_frame,
+            textvariable=self.var_total_cost,
+            style="LargeBold.TLabel",
+            width=5,
         )
         cost_label.grid(row=0, column=1)
 
         self.widgets = {}
-        self.powerups_frame = ttk.Frame(self)
+        self.powerups_frame = ttk.Frame(self, pad=10)
         self.powerups_frame.grid(row=2, column=0)
         for i, powerup_cls in enumerate(POWER_UPS):
             widget = PowerUpWidget(self.powerups_frame, powerup_cls(), pad=5)
@@ -98,16 +107,19 @@ class PowerUpsWidget(ttk.Frame):
             self.powerups_frame.columnconfigure(i, weight=1)
 
         listframe = ttk.Frame(self)
-        listlabel = ttk.Label(listframe, text="Buy Order (Optimized)")
+        listlabel = ttk.Label(
+            listframe, text="Buy Order (Optimized)", style="Large.TLabel"
+        )
         listlabel.grid(row=0, column=0, sticky=tkinter.W + tkinter.E)
         self.var_listbox = tkinter.StringVar(value=[])
         listbox = tkinter.Listbox(
             listframe,
             listvariable=self.var_listbox,
-            font=FONTS["default"],
+            font=FONTS["largebold"],
             state="disabled",
             disabledforeground="black",
-            background="lightgrey",
+            background="#d9d9d9",
+            relief="groove",
         )
         listbox.grid(row=1, column=0, sticky=EXPAND)
         listframe.rowconfigure(1, weight=1)
@@ -125,12 +137,14 @@ class PowerUpsWidget(ttk.Frame):
         self.progress_bar.grid(row=0, column=0, sticky=EXPAND)
         self.progress_bar.grid_remove()
 
-        separator = ttk.Separator(self, orient=tkinter.HORIZONTAL)
-        separator.grid(row=3, column=0, sticky=tkinter.W + tkinter.E)
+        # separator = ttk.Separator(self, orient=tkinter.HORIZONTAL)
+        # separator.grid(row=3, column=0, sticky=tkinter.W + tkinter.E)
 
         buttons_frame = ttk.Frame(self)
         buttons_frame.grid(row=4, column=0, columnspan=2, pady=15)
-        ttk.Button(buttons_frame, text="Reset", command=self.on_press_reset).grid(row=0, column=2)
+        ttk.Button(buttons_frame, text="Reset", command=self.on_press_reset).grid(
+            row=0, column=2
+        )
         ttk.Button(buttons_frame, text="Max All", command=self.on_press_max_all).grid(
             row=0, column=3
         )
@@ -209,14 +223,18 @@ class OptimizerWorker(Worker):
                 powerup.current_tier += 1
                 next_cost, _ = optimize(powerups)
                 powerup.current_tier -= 1
-                result["powerups"][powerup.name]["buy_cost"] = str(next_cost - total_cost)
+                result["powerups"][powerup.name]["buy_cost"] = str(
+                    next_cost - total_cost
+                )
             if powerup.current_tier == 0:
                 result["powerups"][powerup.name]["sell_cost"] = "-"
             else:
                 powerup.current_tier -= 1
                 next_cost, _ = optimize(powerups)
                 powerup.current_tier += 1
-                result["powerups"][powerup.name]["sell_cost"] = str(total_cost - next_cost)
+                result["powerups"][powerup.name]["sell_cost"] = str(
+                    total_cost - next_cost
+                )
 
         return result
 
@@ -227,10 +245,10 @@ class App(ttk.Frame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         title_frame = ttk.Frame(self, pad=10)
-        ttk.Label(
-            title_frame, text=TITLE.upper(), style="Title.TLabel"
-        ).grid(row=0, column=0)
-        ttk.Label(title_frame, text=f"for game version {self.GAME_VERSION}").grid(row=1, column=0)
+        ttk.Label(title_frame, text=TITLE, style="Title.TLabel").grid(row=0, column=0)
+        ttk.Label(title_frame, text=f"for game version {self.GAME_VERSION}").grid(
+            row=1, column=0
+        )
         title_frame.grid(row=0, column=0)
 
         self.powerups_widget = PowerUpsWidget(self, pad=10)
@@ -247,7 +265,7 @@ def get_font_family(preferred, fallback="TkDefaultFont"):
     return font.nametofont(fallback).actual()["family"]
 
 
-def make_font(size=10, weight="normal"):
+def make_font(size=10, weight="normal", pref=FONTS):
     return font.Font(
         family=get_font_family(FONTS, fallback="TkFixedFont"), size=size, weight=weight
     )
@@ -261,7 +279,7 @@ def style(root):
     FONTS["bold"] = make_font(10, "bold")
     FONTS["large"] = make_font(12)
     FONTS["largebold"] = make_font(12, "bold")
-    FONTS["title"] = make_font(18)
+    FONTS["title"] = make_font(18, "bold", SERIF_FONTS)
 
     style = ttk.Style(root)
     style.theme_use("default")
@@ -270,7 +288,7 @@ def style(root):
     style.configure("Large.TLabel", font=FONTS["large"])
     style.configure("Bold.TLabel", font=FONTS["bold"])
     style.configure("LargeBold.TLabel", font=FONTS["largebold"])
-    style.configure("Title.TLabel", font=FONTS["title"])
+    style.configure("Title.TLabel", font=FONTS["title"], foreground="#882222")
     style.configure("TLabel", font=FONTS["default"])
     style.configure("TLabelframe.Label", font=FONTS["largebold"])
     style.configure("TButton", font=FONTS["large"])
