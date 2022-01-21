@@ -1,8 +1,6 @@
 from collections import defaultdict
 from pprint import pprint
 
-from vspowerups.optimize import full_upgrade_cost, optimize_cost
-
 
 def upgrade_cost(base_cost, tiers, n_upgrades):
     cost = base_cost / 10
@@ -48,7 +46,7 @@ class PowerUp:
 
     @classmethod
     def full_upgrade_cost(cls, n_upgrades):
-        return full_upgrade_cost(cls.BASE_COST, cls.MAX_TIER, n_upgrades)
+        return upgrade_cost(cls.BASE_COST, cls.MAX_TIER, n_upgrades)
 
     def __repr__(self):
         return f"{self.name}({self.current_tier})"
@@ -90,7 +88,7 @@ def optimize(powerups):
     n_upgrades = 0
     total_cost = 0
     for pup in pups:
-        total_cost += full_upgrade_cost(pup.BASE_COST, pup.current_tier, n_upgrades)
+        total_cost += upgrade_cost(pup.BASE_COST, pup.current_tier, n_upgrades)
         n_upgrades += pup.current_tier
     return total_cost, pups
 
