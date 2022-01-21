@@ -15,7 +15,7 @@ class PowerUp:
         return self.__class__.__name__
 
     def upgrade_cost(self, n_upgrades):
-        cost = self.BASE_COST / 10
+        cost = self.BASE_COST // 10
         n = 10 + n_upgrades
         if self.target_tier == 0:
             return 0
