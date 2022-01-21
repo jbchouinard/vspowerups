@@ -13,4 +13,4 @@ If you have at least 97,140 gold or more, you can buy all the Power Ups:
 
 ## Usage
 
-Download [vsoptimizer.py](https://github.com/jbchouinard/vspowerups/raw/main/vsoptimizer.py) and run with Python 3.7+.
+Download [vsoptimizer.py](https://github.com/jbchouinard/vspowerups/releases/download/v0.2.8.2/vsoptimizer.py) and run with Python 3.7+.
