@@ -4,7 +4,7 @@
 
 ## Usage
 
-Download vsoptimizer.py and run with Python 3.7+.
+Download [vsoptimizer.py](https://github.com/jbchouinard/vspowerups/raw/main/vsoptimizer.py) and run with Python 3.7+.
 
 
 ### Linux
