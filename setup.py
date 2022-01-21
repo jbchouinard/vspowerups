@@ -2,7 +2,7 @@ from setuptools import setup, find_packages, Extension
 
 setup(
     name="vspowerups",
-    version="0.2.8.0",
+    version="0.2.8.1",
     url="https://github.com/jbchouinard/vspowerups.git",
     author="Jerome Boisvert-Chouinard",
     author_email="github@jbchouinard.net",
