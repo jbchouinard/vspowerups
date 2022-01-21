@@ -4,17 +4,10 @@
 
 ![Screenshot of the game](screenshot.png?raw=true "Vampire Survivors Power Up Optimizer")
 
-## Download
+## Usage
 
-See [releases](https://github.com/jbchouinard/vspowerups/releases).
+Download vsoptimizer.py and run with Python 3.7+.
 
-## Build from source
-
-### Requirements
-
-- Python 3.7+
-- pip
-- pyinstaller
 
 ### Linux
 
