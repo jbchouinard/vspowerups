@@ -1,5 +1,3 @@
-[![Python application](https://github.com/jbchouinard/vspowerups/actions/workflows/python-app.yaml/badge.svg)](https://github.com/jbchouinard/vspowerups/actions/workflows/python-app.yaml)
-
 # Vampire Survivors Power Up Optimizer
 
 ![Screenshot of the game](screenshot.png?raw=true "Vampire Survivors Power Up Optimizer")
