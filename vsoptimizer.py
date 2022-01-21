@@ -1,27 +1,6 @@
 import tkinter
 from collections import defaultdict
-from multiprocessing import Queue
-from pprint import pprint
-from queue import Empty
-from tkinter import font
-from tkinter import ttk
-
-
-def upgrade_cost(base_cost, tiers, n_upgrades):
-    cost = base_cost / 10
-    n = 10 + n_upgrades
-    if tiers == 0:
-        return 0
-    elif tiers == 1:
-        return n * cost
-    elif tiers == 2:
-        return (3 * n + 2) * cost
-    elif tiers == 3:
-        return (6 * n + 8) * cost
-    elif tiers == 4:
-        return (10 * n + 20) * cost
-    else:
-        return (15 * n + 40) * cost
+from tkinter import font, ttk
 
 
 class PowerUp:
@@ -29,38 +8,36 @@ class PowerUp:
     BASE_COST = 0
 
     def __init__(self):
-        self.current_tier = 0
+        self.target_tier = 0
 
     @property
     def name(self):
         return self.__class__.__name__
 
-    def upgrade_max(self):
-        self.current_tier = self.MAX_TIER
-
-    def upgrade(self):
-        if self.current_tier == self.MAX_TIER:
-            raise ValueError("already max tier")
-        self.current_tier += 1
-
     def upgrade_cost(self, n_upgrades):
-        return (1 + (0.1 * n_upgrades)) * self.current_tier * self.BASE_COST
+        cost = self.BASE_COST / 10
+        n = 10 + n_upgrades
+        if self.target_tier == 0:
+            return 0
+        elif self.target_tier == 1:
+            return n * cost
+        elif self.target_tier == 2:
+            return (3 * n + 2) * cost
+        elif self.target_tier == 3:
+            return (6 * n + 8) * cost
+        elif self.target_tier == 4:
+            return (10 * n + 20) * cost
+        else:
+            return (15 * n + 40) * cost
 
     def score(self):
-        return (self.current_tier + 1) * self.BASE_COST
-
-    @classmethod
-    def full_upgrade_cost(cls, n_upgrades):
-        return upgrade_cost(cls.BASE_COST, cls.MAX_TIER, n_upgrades)
+        return (self.target_tier + 1) * self.BASE_COST
 
     def __repr__(self):
-        return f"{self.name}({self.current_tier})"
+        return f"{self.name}({self.target_tier})"
 
     def __eq__(self, other):
-        return (
-            self.__class__ is other.__class__
-            and self.current_tier == other.current_tier
-        )
+        return self.__class__ is other.__class__ and self.target_tier == other.target_tier
 
 
 POWER_UPS = []
@@ -93,8 +70,8 @@ def optimize(powerups):
     n_upgrades = 0
     total_cost = 0
     for pup in pups:
-        total_cost += upgrade_cost(pup.BASE_COST, pup.current_tier, n_upgrades)
-        n_upgrades += pup.current_tier
+        total_cost += pup.upgrade_cost(n_upgrades)
+        n_upgrades += pup.target_tier
     return total_cost, pups
 
 
@@ -142,8 +119,8 @@ class PowerUpWidget(ttk.Frame):
 
     def on_spinbox_change(self):
         new_tier = int(self.var_tier.get())
-        if new_tier != self.powerup.current_tier:
-            self.powerup.current_tier = new_tier
+        if new_tier != self.powerup.target_tier:
+            self.powerup.target_tier = new_tier
             self.winfo_toplevel().event_generate("<<PowerUpTierUpdate>>")
 
 
@@ -208,53 +185,41 @@ class PowerUpsWidget(ttk.Frame):
         )
 
     def on_tier_update(self, event):
-        result = optimize_all([w.powerup for w in self.widgets.values()])
-        self.var_total_cost.set(result["total_cost"])
-        self.var_listbox.set(result["buy_list"])
+        powerups = [w.powerup for w in self.widgets.values()]
+        total_cost, order = optimize(powerups)
 
-        for w in self.widgets.values():
-            r = result["powerups"].get(w.powerup.name)
-            w.var_buy_cost.set(r["buy_cost"])
-            w.var_sell_cost.set(r["sell_cost"])
+        self.var_total_cost.set(total_cost)
+        self.var_listbox.set([f"{p.target_tier}x {p.name}" for p in order if p.target_tier > 0])
+
+        for widget in self.widgets.values():
+            powerup = widget.powerup
+            if powerup.target_tier == powerup.MAX_TIER:
+                widget.var_buy_cost.set("-")
+            else:
+                powerup.target_tier += 1
+                next_cost, _ = optimize(powerups)
+                powerup.target_tier -= 1
+                widget.var_buy_cost.set(str(next_cost - total_cost))
+
+            if powerup.target_tier == 0:
+                widget.var_sell_cost.set("-")
+            else:
+                powerup.target_tier -= 1
+                next_cost, _ = optimize(powerups)
+                powerup.target_tier += 1
+                widget.var_sell_cost.set(str(total_cost - next_cost))
 
     def on_press_reset(self):
         for w in self.widgets.values():
             w.var_tier.set(0)
-            w.powerup.current_tier = 0
+            w.powerup.target_tier = 0
         self.winfo_toplevel().event_generate("<<PowerUpTierUpdate>>")
 
     def on_press_max_all(self):
         for w in self.widgets.values():
             w.var_tier.set(w.powerup.MAX_TIER)
-            w.powerup.current_tier = w.powerup.MAX_TIER
+            w.powerup.target_tier = w.powerup.MAX_TIER
         self.winfo_toplevel().event_generate("<<PowerUpTierUpdate>>")
-
-
-def optimize_all(powerups):
-    total_cost, order = optimize(powerups)
-    result = {
-        "powerups": {p.name: {} for p in powerups},
-        "total_cost": total_cost,
-        "buy_list": [f"{p.current_tier}x {p.name}" for p in order if p.current_tier > 0],
-    }
-
-    for powerup in powerups:
-        if powerup.current_tier == powerup.MAX_TIER:
-            result["powerups"][powerup.name]["buy_cost"] = "-"
-        else:
-            powerup.current_tier += 1
-            next_cost, _ = optimize(powerups)
-            powerup.current_tier -= 1
-            result["powerups"][powerup.name]["buy_cost"] = str(next_cost - total_cost)
-        if powerup.current_tier == 0:
-            result["powerups"][powerup.name]["sell_cost"] = "-"
-        else:
-            powerup.current_tier -= 1
-            next_cost, _ = optimize(powerups)
-            powerup.current_tier += 1
-            result["powerups"][powerup.name]["sell_cost"] = str(total_cost - next_cost)
-
-    return result
 
 
 class App(ttk.Frame):
@@ -297,9 +262,6 @@ MONO_FONTS = ["Noto Mono", "Liberation Mono"]
 NORMAL_FONTS = ["Helvetica", "Noto Serif", "Liberation Serif"]
 
 FONTS = {}
-COLORS = {
-    "darkred": "#882222",
-}
 
 
 def style(root):
