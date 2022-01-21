@@ -5,7 +5,6 @@ from tkinter import font
 from tkinter import ttk
 
 from vspowerups.powerups import optimize, POWER_UPS
-from vspowerups.worker import TkinterWorkerPool
 
 TITLE = "Vampire Survivors Power Up Optimizer"
 
@@ -109,18 +108,6 @@ class PowerUpsWidget(ttk.Frame):
         listframe.rowconfigure(1, weight=1)
         listframe.grid(row=2, column=1, sticky=EXPAND)
 
-        progress_bar_frame = ttk.Frame(self, width=20)
-        progress_bar_frame.grid(row=2, column=2, sticky=EXPAND, padx=5)
-        progress_bar = ttk.Progressbar(
-            progress_bar_frame,
-            orient=tkinter.VERTICAL,
-            length=400,
-            mode="indeterminate",
-            maximum=20,
-        )
-        progress_bar.grid(row=0, column=0, sticky=EXPAND)
-        progress_bar.grid_remove()
-
         buttons_frame = ttk.Frame(self)
         buttons_frame.grid(row=4, column=0, columnspan=2, pady=15)
         ttk.Button(buttons_frame, text="Reset", command=self.on_press_reset).grid(row=0, column=2)
@@ -128,22 +115,8 @@ class PowerUpsWidget(ttk.Frame):
             row=0, column=3
         )
 
-        self.optimizer = TkinterWorkerPool(
-            self,
-            optimize_all,
-            n=1,
-            name="vspowerups-optimizer",
-            update_interval_ms=20,
-            callback=self.callback_optimize_all,
-            progress_bar=progress_bar,
-            hide_progress_bar=True,
-        )
-        self.optimizer.start()
-
     def on_tier_update(self, event):
-        self.optimizer.send([w.powerup for w in self.widgets.values()])
-
-    def callback_optimize_all(self, result):
+        result = optimize_all([w.powerup for w in self.widgets.values()])
         self.var_total_cost.set(result["total_cost"])
         self.var_listbox.set(result["buy_list"])
 

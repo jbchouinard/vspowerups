@@ -4,6 +4,23 @@ from pprint import pprint
 from vspowerups.optimize import full_upgrade_cost, optimize_cost
 
 
+def upgrade_cost(base_cost, tiers, n_upgrades):
+    cost = base_cost / 10
+    n = 10 + n_upgrades
+    if tiers == 0:
+        return 0
+    elif tiers == 1:
+        return n * cost
+    elif tiers == 2:
+        return (3 * n + 2) * cost
+    elif tiers == 3:
+        return (6 * n + 8) * cost
+    elif tiers == 4:
+        return (10 * n + 20) * cost
+    else:
+        return (15 * n + 40) * cost
+
+
 class PowerUp:
     MAX_TIER = 0
     BASE_COST = 0
@@ -25,6 +42,9 @@ class PowerUp:
 
     def upgrade_cost(self, n_upgrades):
         return (1 + (0.1 * n_upgrades)) * self.current_tier * self.BASE_COST
+
+    def score(self):
+        return (self.current_tier + 1) * self.BASE_COST
 
     @classmethod
     def full_upgrade_cost(cls, n_upgrades):
@@ -66,18 +86,13 @@ Greed = power_up(5, 200, "Greed")
 
 
 def optimize(powerups):
-    by_cost = defaultdict(list)
-    all_costs = []
-    for pup in powerups:
-        cost = (pup.BASE_COST, pup.current_tier)
-        all_costs.append(cost)
-        by_cost[cost].append(pup)
-
-    total_cost, optimized = optimize_cost(all_costs)
-    sorted_powerups = []
-    for cost in optimized:
-        sorted_powerups.append(by_cost[cost].pop())
-    return total_cost, sorted_powerups
+    pups = sorted(powerups, key=lambda p: p.score(), reverse=True)
+    n_upgrades = 0
+    total_cost = 0
+    for pup in pups:
+        total_cost += full_upgrade_cost(pup.BASE_COST, pup.current_tier, n_upgrades)
+        n_upgrades += pup.current_tier
+    return total_cost, pups
 
 
 if __name__ == "__main__":

@@ -1,16 +1,13 @@
 default: dist/vsoptimizer
 
-dist/vsoptimizer: extension
+dist/vsoptimizer: venv
 	venv/bin/pyinstaller -F --windowed vsoptimizer.py
-
-extension: venv
-	venv/bin/python setup.py build_ext --inplace
 
 venv:
 	python -m venv venv
-	venv/bin/pip install cython pyinstaller
+	venv/bin/pip install pyinstaller
 
 clean:
-	rm -rf venv
+	rm -rf venv build dist
 
 .PHONY: default extension clean

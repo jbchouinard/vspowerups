@@ -8,8 +8,7 @@ setup(
     author_email="github@jbchouinard.net",
     description="Power Ups optimizer for the Vampire Survivors game.",
     packages=find_packages(),
-    setup_requires=["Cython"],
+    setup_requires=[],
     install_requires=[],
     entry_points={"console_scripts": ["vspowerups = vspowerups.gui:main"]},
-    ext_modules=[Extension("vspowerups.optimize", sources=["vspowerups/optimize.pyx"])],
 )

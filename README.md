@@ -14,7 +14,6 @@ See [releases](https://github.com/jbchouinard/vspowerups/releases).
 
 - Python 3.7+
 - pip
-- Cython
 - pyinstaller
 
 ### Linux
