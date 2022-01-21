@@ -5,12 +5,9 @@ from tkinter import font
 from tkinter import ttk
 
 from vspowerups.powerups import optimize, POWER_UPS
-from vspowerups.worker import Worker
+from vspowerups.worker import TkinterWorkerPool
 
 TITLE = "Vampire Survivors Power Up Optimizer"
-
-FONTS = ["Noto Mono", "Liberation Mono"]
-SERIF_FONTS = ["Helvetica", "Noto Serif", "Liberation Serif"]
 
 EXPAND = tkinter.N + tkinter.S + tkinter.W + tkinter.E
 
@@ -61,22 +58,11 @@ class PowerUpWidget(ttk.Frame):
 
 class PowerUpsWidget(ttk.Frame):
     ROW_LENGTH = 4
-    QUEUE_CHECK_DELAY = 20
 
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
 
-        self.job_queue = Queue()
-        self.result_queue = Queue()
-        self.open_jobs = 0
-        self.worker = OptimizerWorker(
-            self.job_queue, self.result_queue, name="vspowerups-optimizer"
-        )
-        self.worker.start()
-
-        self.winfo_toplevel().bind(
-            "<<PowerUpTierUpdate>>", self.callback_tier_update, add="+"
-        )
+        self.winfo_toplevel().bind("<<PowerUpTierUpdate>>", self.on_tier_update, add="+")
 
         cost_frame = ttk.Frame(self)
         cost_frame.grid(row=0, column=0)
@@ -107,9 +93,7 @@ class PowerUpsWidget(ttk.Frame):
             self.powerups_frame.columnconfigure(i, weight=1)
 
         listframe = ttk.Frame(self)
-        listlabel = ttk.Label(
-            listframe, text="Buy Order (Optimized)", style="Large.TLabel"
-        )
+        listlabel = ttk.Label(listframe, text="Buy Order (Optimized)", style="Large.TLabel")
         listlabel.grid(row=0, column=0, sticky=tkinter.W + tkinter.E)
         self.var_listbox = tkinter.StringVar(value=[])
         listbox = tkinter.Listbox(
@@ -127,66 +111,46 @@ class PowerUpsWidget(ttk.Frame):
 
         progress_bar_frame = ttk.Frame(self, width=20)
         progress_bar_frame.grid(row=2, column=2, sticky=EXPAND, padx=5)
-        self.progress_bar = ttk.Progressbar(
+        progress_bar = ttk.Progressbar(
             progress_bar_frame,
             orient=tkinter.VERTICAL,
             length=400,
             mode="indeterminate",
             maximum=20,
         )
-        self.progress_bar.grid(row=0, column=0, sticky=EXPAND)
-        self.progress_bar.grid_remove()
-
-        # separator = ttk.Separator(self, orient=tkinter.HORIZONTAL)
-        # separator.grid(row=3, column=0, sticky=tkinter.W + tkinter.E)
+        progress_bar.grid(row=0, column=0, sticky=EXPAND)
+        progress_bar.grid_remove()
 
         buttons_frame = ttk.Frame(self)
         buttons_frame.grid(row=4, column=0, columnspan=2, pady=15)
-        ttk.Button(buttons_frame, text="Reset", command=self.on_press_reset).grid(
-            row=0, column=2
-        )
+        ttk.Button(buttons_frame, text="Reset", command=self.on_press_reset).grid(row=0, column=2)
         ttk.Button(buttons_frame, text="Max All", command=self.on_press_max_all).grid(
             row=0, column=3
         )
 
-    def progress_start(self):
-        self.progress_bar.grid()
-        self.progress_bar.start()
+        self.optimizer = TkinterWorkerPool(
+            self,
+            optimize_all,
+            n=1,
+            name="vspowerups-optimizer",
+            update_interval_ms=20,
+            callback=self.callback_optimize_all,
+            progress_bar=progress_bar,
+            hide_progress_bar=True,
+        )
+        self.optimizer.start()
 
-    def progress_stop(self):
-        self.progress_bar.grid_remove()
-        self.progress_bar.stop()
+    def on_tier_update(self, event):
+        self.optimizer.send([w.powerup for w in self.widgets.values()])
 
-    def check_work_queue(self):
-        result = None
-        try:
-            result = self.result_queue.get(block=False)
-            self.open_jobs -= 1
-        except Empty:
-            pass
-        finally:
-            if self.open_jobs:
-                self.after(self.QUEUE_CHECK_DELAY, self.check_work_queue)
+    def callback_optimize_all(self, result):
+        self.var_total_cost.set(result["total_cost"])
+        self.var_listbox.set(result["buy_list"])
 
-        if not self.open_jobs:
-            self.progress_stop()
-
-        if result and not self.open_jobs:
-            self.var_total_cost.set(result["total_cost"])
-            self.var_listbox.set(result["buy_list"])
-
-            for w in self.widgets.values():
-                r = result["powerups"].get(w.powerup.name)
-                w.var_buy_cost.set(r["buy_cost"])
-                w.var_sell_cost.set(r["sell_cost"])
-
-    def callback_tier_update(self, event):
-        powerups = [w.powerup for w in self.widgets.values()]
-        self.job_queue.put(powerups)
-        if not self.open_jobs:
-            self.progress_start()
-        self.open_jobs += 1
-        self.after(self.QUEUE_CHECK_DELAY, self.check_work_queue)
+        for w in self.widgets.values():
+            r = result["powerups"].get(w.powerup.name)
+            w.var_buy_cost.set(r["buy_cost"])
+            w.var_sell_cost.set(r["sell_cost"])
 
     def on_press_reset(self):
         for w in self.widgets.values():
@@ -201,42 +165,31 @@ class PowerUpsWidget(ttk.Frame):
         self.winfo_toplevel().event_generate("<<PowerUpTierUpdate>>")
 
 
-class OptimizerWorker(Worker):
-    def do_job(self, powerups, more_jobs):
-        # Don't bother computing if there are more updates
-        if more_jobs:
-            return None
-        result = {"powerups": {p.name: {} for p in powerups}}
-        total_cost, order = optimize(powerups)
-        result["total_cost"] = total_cost
+def optimize_all(powerups):
+    total_cost, order = optimize(powerups)
+    result = {
+        "powerups": {p.name: {} for p in powerups},
+        "total_cost": total_cost,
+        "buy_list": [f"{p.current_tier}x {p.name}" for p in order if p.current_tier > 0],
+    }
 
-        buy_list = [None] * 14
-        for i, powerup in enumerate(order, 1):
-            if powerup.current_tier:
-                buy_list[i - 1] = f"{powerup.current_tier}x {powerup.name}"
-        result["buy_list"] = [p for p in buy_list if p is not None]
+    for powerup in powerups:
+        if powerup.current_tier == powerup.MAX_TIER:
+            result["powerups"][powerup.name]["buy_cost"] = "-"
+        else:
+            powerup.current_tier += 1
+            next_cost, _ = optimize(powerups)
+            powerup.current_tier -= 1
+            result["powerups"][powerup.name]["buy_cost"] = str(next_cost - total_cost)
+        if powerup.current_tier == 0:
+            result["powerups"][powerup.name]["sell_cost"] = "-"
+        else:
+            powerup.current_tier -= 1
+            next_cost, _ = optimize(powerups)
+            powerup.current_tier += 1
+            result["powerups"][powerup.name]["sell_cost"] = str(total_cost - next_cost)
 
-        for powerup in powerups:
-            if powerup.current_tier == powerup.MAX_TIER:
-                result["powerups"][powerup.name]["buy_cost"] = "-"
-            else:
-                powerup.current_tier += 1
-                next_cost, _ = optimize(powerups)
-                powerup.current_tier -= 1
-                result["powerups"][powerup.name]["buy_cost"] = str(
-                    next_cost - total_cost
-                )
-            if powerup.current_tier == 0:
-                result["powerups"][powerup.name]["sell_cost"] = "-"
-            else:
-                powerup.current_tier -= 1
-                next_cost, _ = optimize(powerups)
-                powerup.current_tier += 1
-                result["powerups"][powerup.name]["sell_cost"] = str(
-                    total_cost - next_cost
-                )
-
-        return result
+    return result
 
 
 class App(ttk.Frame):
@@ -246,9 +199,7 @@ class App(ttk.Frame):
         super().__init__(parent, **kwargs)
         title_frame = ttk.Frame(self, pad=10)
         ttk.Label(title_frame, text=TITLE, style="Title.TLabel").grid(row=0, column=0)
-        ttk.Label(title_frame, text=f"for game version {self.GAME_VERSION}").grid(
-            row=1, column=0
-        )
+        ttk.Label(title_frame, text=f"for game version {self.GAME_VERSION}").grid(row=1, column=0)
         title_frame.grid(row=0, column=0)
 
         self.powerups_widget = PowerUpsWidget(self, pad=10)
@@ -265,21 +216,33 @@ def get_font_family(preferred, fallback="TkDefaultFont"):
     return font.nametofont(fallback).actual()["family"]
 
 
-def make_font(size=10, weight="normal", pref=FONTS):
+def mono_font(size=10, weight="normal"):
     return font.Font(
-        family=get_font_family(FONTS, fallback="TkFixedFont"), size=size, weight=weight
+        family=get_font_family(MONO_FONTS, fallback="TkFixedFont"), size=size, weight=weight
     )
 
 
+def normal_font(size=10, weight="normal"):
+    return font.Font(
+        family=get_font_family(NORMAL_FONTS, fallback="TkDefaultFont"), size=size, weight=weight
+    )
+
+
+MONO_FONTS = ["Noto Mono", "Liberation Mono"]
+NORMAL_FONTS = ["Helvetica", "Noto Serif", "Liberation Serif"]
+
 FONTS = {}
+COLORS = {
+    "darkred": "#882222",
+}
 
 
 def style(root):
-    FONTS["default"] = make_font(10)
-    FONTS["bold"] = make_font(10, "bold")
-    FONTS["large"] = make_font(12)
-    FONTS["largebold"] = make_font(12, "bold")
-    FONTS["title"] = make_font(18, "bold", SERIF_FONTS)
+    FONTS["default"] = mono_font(10)
+    FONTS["bold"] = mono_font(10, "bold")
+    FONTS["large"] = mono_font(12)
+    FONTS["largebold"] = mono_font(12, "bold")
+    FONTS["title"] = normal_font(18, "bold")
 
     style = ttk.Style(root)
     style.theme_use("default")
