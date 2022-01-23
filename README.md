@@ -10,10 +10,11 @@ The purchase price of power ups in Vampire Survivors depends on the order in whi
 Since each upgrade increases the price of all other powerups, you want to buy the most expensive
 ones first.
 
-This app calculates the minium gold price of any particular power up setup you might want, and shows
+This app calculates the minimum gold price for any combination of power ups, and shows
 in what order to buy the power ups to get that minimum price.
 
-If you have at least 97,140 gold or more, you can buy all the Power Ups:
+For example, the minimum price to buy all the power ups is 97,140 gold, if they are bought in the
+order shown:
 
 ![Screenshot of the game](screenshot.png?raw=true "Vampire Survivors Power Up Optimizer")
 
