@@ -1,5 +1,4 @@
 import tkinter
-from collections import defaultdict
 from tkinter import font, ttk
 
 
@@ -37,7 +36,9 @@ class PowerUp:
         return f"{self.name}({self.target_tier})"
 
     def __eq__(self, other):
-        return self.__class__ is other.__class__ and self.target_tier == other.target_tier
+        return (
+            self.__class__ is other.__class__ and self.target_tier == other.target_tier
+        )
 
 
 POWER_UPS = []
@@ -63,6 +64,7 @@ Magnet = power_up(2, 300, "Magnet")
 Luck = power_up(3, 600, "Luck")
 Growth = power_up(5, 900, "Growth")
 Greed = power_up(5, 200, "Greed")
+Revival = power_up(1, 52000, "Revival")
 
 
 def optimize(powerups):
@@ -76,6 +78,7 @@ def optimize(powerups):
 
 
 TITLE = "Vampire Survivors Power Up Optimizer"
+GAME_VERSION = "0.2.10h"
 
 EXPAND = tkinter.N + tkinter.S + tkinter.W + tkinter.E
 
@@ -130,7 +133,9 @@ class PowerUpsWidget(ttk.Frame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
 
-        self.winfo_toplevel().bind("<<PowerUpTierUpdate>>", self.on_tier_update, add="+")
+        self.winfo_toplevel().bind(
+            "<<PowerUpTierUpdate>>", self.on_tier_update, add="+"
+        )
 
         cost_frame = ttk.Frame(self)
         cost_frame.grid(row=0, column=0)
@@ -142,7 +147,7 @@ class PowerUpsWidget(ttk.Frame):
             cost_frame,
             textvariable=self.var_total_cost,
             style="LargeBold.TLabel",
-            width=5,
+            width=6,
         )
         cost_label.grid(row=0, column=1)
 
@@ -161,7 +166,9 @@ class PowerUpsWidget(ttk.Frame):
             self.powerups_frame.columnconfigure(i, weight=1)
 
         listframe = ttk.Frame(self)
-        listlabel = ttk.Label(listframe, text="Buy Order (Optimized)", style="Large.TLabel")
+        listlabel = ttk.Label(
+            listframe, text="Buy Order (Optimized)", style="Large.TLabel"
+        )
         listlabel.grid(row=0, column=0, sticky=tkinter.W + tkinter.E)
         self.var_listbox = tkinter.StringVar(value=[])
         listbox = tkinter.Listbox(
@@ -179,7 +186,9 @@ class PowerUpsWidget(ttk.Frame):
 
         buttons_frame = ttk.Frame(self)
         buttons_frame.grid(row=4, column=0, columnspan=2, pady=15)
-        ttk.Button(buttons_frame, text="Reset", command=self.on_press_reset).grid(row=0, column=2)
+        ttk.Button(buttons_frame, text="Reset", command=self.on_press_reset).grid(
+            row=0, column=2
+        )
         ttk.Button(buttons_frame, text="Max All", command=self.on_press_max_all).grid(
             row=0, column=3
         )
@@ -189,7 +198,9 @@ class PowerUpsWidget(ttk.Frame):
         total_cost, order = optimize(powerups)
 
         self.var_total_cost.set(total_cost)
-        self.var_listbox.set([f"{p.target_tier}x {p.name}" for p in order if p.target_tier > 0])
+        self.var_listbox.set(
+            [f"{p.target_tier}x {p.name}" for p in order if p.target_tier > 0]
+        )
 
         for widget in self.widgets.values():
             powerup = widget.powerup
@@ -223,13 +234,13 @@ class PowerUpsWidget(ttk.Frame):
 
 
 class App(ttk.Frame):
-    GAME_VERSION = "v0.2.8a"
-
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         title_frame = ttk.Frame(self, pad=10)
         ttk.Label(title_frame, text=TITLE, style="Title.TLabel").grid(row=0, column=0)
-        ttk.Label(title_frame, text=f"for game version {self.GAME_VERSION}").grid(row=1, column=0)
+        ttk.Label(title_frame, text=f"for game version {GAME_VERSION}").grid(
+            row=1, column=0
+        )
         title_frame.grid(row=0, column=0)
 
         self.powerups_widget = PowerUpsWidget(self, pad=10)
@@ -248,13 +259,17 @@ def get_font_family(preferred, fallback="TkDefaultFont"):
 
 def mono_font(size=10, weight="normal"):
     return font.Font(
-        family=get_font_family(MONO_FONTS, fallback="TkFixedFont"), size=size, weight=weight
+        family=get_font_family(MONO_FONTS, fallback="TkFixedFont"),
+        size=size,
+        weight=weight,
     )
 
 
 def normal_font(size=10, weight="normal"):
     return font.Font(
-        family=get_font_family(NORMAL_FONTS, fallback="TkDefaultFont"), size=size, weight=weight
+        family=get_font_family(NORMAL_FONTS, fallback="TkDefaultFont"),
+        size=size,
+        weight=weight,
     )
 
 
