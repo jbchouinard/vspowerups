@@ -78,7 +78,7 @@ def optimize(powerups):
 
 
 TITLE = "Vampire Survivors Power Up Optimizer"
-GAME_VERSION = "0.2.10h"
+GAME_VERSION = "0.2.10h (beta)"
 
 EXPAND = tkinter.N + tkinter.S + tkinter.W + tkinter.E
 
