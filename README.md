@@ -4,7 +4,7 @@
 
 Download [vsoptimizer.py](https://github.com/jbchouinard/vspowerups/releases/download/v0.2.8.2/vsoptimizer.py) and run with Python 3.7+.
 
-For the beta game version: [vsoptimizer.py](https://github.com/jbchouinard/vspowerups/releases/download/v0.2.10h/vsoptimizer.py)
+For the beta game version: [vsoptimizer.py](https://github.com/jbchouinard/vspowerups/releases/download/v0.2.11a/vsoptimizer.py)
 
 ## Description
 
