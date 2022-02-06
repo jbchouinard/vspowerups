@@ -64,7 +64,7 @@ Magnet = power_up(2, 300, "Magnet")
 Luck = power_up(3, 600, "Luck")
 Growth = power_up(5, 900, "Growth")
 Greed = power_up(5, 200, "Greed")
-Revival = power_up(1, 52000, "Revival")
+Revival = power_up(1, 10000, "Revival")
 
 
 def optimize(powerups):
