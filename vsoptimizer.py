@@ -143,7 +143,7 @@ class PowerUpsWidget(ttk.Frame):
             cost_frame,
             textvariable=self.var_total_cost,
             style="LargeBold.TLabel",
-            width=5,
+            width=6,
         )
         cost_label.grid(row=0, column=1)
 
