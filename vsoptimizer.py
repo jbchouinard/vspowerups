@@ -64,6 +64,9 @@ Luck = power_up(3, 600, "Luck")
 Growth = power_up(5, 900, "Growth")
 Greed = power_up(5, 200, "Greed")
 Revival = power_up(1, 10000, "Revival")
+Reroll = power_up(1, 10000, "Reroll")
+Skip = power_up(1, 1000, "Skip")
+
 
 
 def optimize(powerups):
@@ -224,7 +227,7 @@ class PowerUpsWidget(ttk.Frame):
 
 
 class App(ttk.Frame):
-    GAME_VERSION = "v0.2.8a"
+    GAME_VERSION = "v0.2.12"
 
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
