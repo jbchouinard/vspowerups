@@ -15,20 +15,20 @@ class PowerUp:
         return self.__class__.__name__
 
     def upgrade_cost(self, n_upgrades):
-        cost = self.BASE_COST // 10
+        cost = self.BASE_COST / 10
         n = 10 + n_upgrades
         if self.target_tier == 0:
             return 0
         elif self.target_tier == 1:
-            return n * cost
+            return int(n * cost)
         elif self.target_tier == 2:
-            return (3 * n + 2) * cost
+            return int((3 * n + 2) * cost)
         elif self.target_tier == 3:
-            return (6 * n + 8) * cost
+            return int((6 * n + 8) * cost)
         elif self.target_tier == 4:
-            return (10 * n + 20) * cost
+            return int((10 * n + 20) * cost)
         else:
-            return (15 * n + 40) * cost
+            return int((15 * n + 40) * cost)
 
     def score(self):
         return (self.target_tier + 1) * self.BASE_COST
@@ -63,8 +63,9 @@ Magnet = power_up(2, 300, "Magnet")
 Luck = power_up(3, 600, "Luck")
 Growth = power_up(5, 900, "Growth")
 Greed = power_up(5, 200, "Greed")
+Curse = power_up(5, 1666, "Curse")
 Revival = power_up(1, 10000, "Revival")
-Reroll = power_up(1, 10000, "Reroll")
+Reroll = power_up(2, 5000, "Reroll")
 Skip = power_up(1, 1000, "Skip")
 
 
@@ -227,7 +228,7 @@ class PowerUpsWidget(ttk.Frame):
 
 
 class App(ttk.Frame):
-    GAME_VERSION = "v0.2.12"
+    GAME_VERSION = "v0.2.13"
 
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
