@@ -63,6 +63,11 @@ Magnet = power_up(2, 300, "Magnet")
 Luck = power_up(3, 600, "Luck")
 Growth = power_up(5, 900, "Growth")
 Greed = power_up(5, 200, "Greed")
+Curse = power_up(5, 1666, "Curse")
+Revival = power_up(1, 10000, "Revival")
+Reroll = power_up(2, 5000, "Reroll")
+Skip = power_up(2, 200, "Skip")
+Banish = power_up(1, 200, "Banish")
 
 
 def optimize(powerups):
@@ -142,7 +147,7 @@ class PowerUpsWidget(ttk.Frame):
             cost_frame,
             textvariable=self.var_total_cost,
             style="LargeBold.TLabel",
-            width=5,
+            width=6,
         )
         cost_label.grid(row=0, column=1)
 
